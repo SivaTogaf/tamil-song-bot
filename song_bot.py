@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 # Load and merge all sheets from Excel
-xls = pd.ExcelFile("AriyavaiAaru_Songs_List.xlsx")
+xls = pd.ExcelFile("AriyavaiAaru_Songs_List_BOT.xlsx")
 df = pd.concat([xls.parse(sheet) for sheet in xls.sheet_names], ignore_index=True)
 
 # Clean and standardize column names
