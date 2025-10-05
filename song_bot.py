@@ -2,9 +2,17 @@ import streamlit as st
 import pandas as pd
 
 # Load your Excel file
-df = pd.read_excel("AriyavaiAaru_Songs_List.xlsx")
+xls = pd.ExcelFile("AriyavaiAaru_Songs_List.xlsx")
+df = pd.concat([xls.parse(sheet) for sheet in xls.sheet_names], ignore_index=True)
+
+# Clean column names
+df.columns = df.columns.str.strip()
+df.columns = ['Date', 'Song', 'Movie', 'Year', 'Music Director', 'Lyricist', 'Singers']
 
 st.title("🎶 Tamil Song Analysis Bot")
+
+def songs_by_lyricist(name):
+    return df[df['Lyricist'].str.contains(name, case=False, na=False)][['Song', 'Movie', 'Year']]
 
 # User input
 query = st.text_input("Ask me something about the songs:")
@@ -34,6 +42,13 @@ if query:
         results = df[df['Year'].astype(str).str.contains(year)]
         st.write(f"📅 Songs from the year {year}:")
         st.dataframe(results[['Song', 'Movie', 'Singers']])
-    
+elif "songs by lyricist" in query_lower:
+    name = query_lower.split("songs by lyricist")[-1].strip()
+    results = songs_by_lyricist(name)
+    if not results.empty:
+        st.write(f"📝 Songs written by {name}:")
+        st.dataframe(results)
+    else:
+        st.warning(f"No songs found for lyricist '{name}'.")    
     else:
         st.warning("Sorry, I didn't understand that. Try asking about top singers, composers, or songs by a specific artist.")
