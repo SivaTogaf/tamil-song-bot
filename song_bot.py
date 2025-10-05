@@ -49,6 +49,4 @@ elif "songs by lyricist" in query_lower:
         st.write(f"📝 Songs written by {name}:")
         st.dataframe(results)
     else:
-        st.warning(f"No songs found for lyricist '{name}'.")    
-    else:
         st.warning("Sorry, I didn't understand that. Try asking about top singers, composers, or songs by a specific artist.")
