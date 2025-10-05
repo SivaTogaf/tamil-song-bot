@@ -6,26 +6,24 @@ xls = pd.ExcelFile("AriyavaiAaru_Songs_List_BOT.xlsx")
 
 def clean_sheet(sheet):
     df = xls.parse(sheet, dtype=str)
-    df.columns = df.columns.str.strip()
-    df = df.dropna(how='all')  # Drop fully empty rows
-    df = df.loc[:, ~df.columns.str.contains('^Unnamed')]  # Drop unnamed columns
+    df.columns = df.columns.str.strip().str.lower()
+    df = df.rename(columns={
+        'composer': 'music director',
+        'singer': 'singers',
+        'lyricist': 'lyricist',
+        'song': 'song',
+        'movie': 'movie',
+        'year': 'year',
+        'date': 'date'
+    })
+    df = df.dropna(how='all')
+    df = df.loc[:, ~df.columns.str.contains('^unnamed')]
     return df
 
 df = pd.concat([clean_sheet(sheet) for sheet in xls.sheet_names], ignore_index=True)
 
-# Normalize column names
-column_map = {
-    'date': 'Date',
-    'song': 'Song',
-    'movie': 'Movie',
-    'year': 'Year',
-    'music director': 'Music Director',
-    'composer': 'Music Director',
-    'lyricist': 'Lyricist',
-    'singers': 'Singers',
-    'singer': 'Singers'
-}
-df.columns = [column_map.get(col.lower().strip(), col.strip()) for col in df.columns]
+# Title-case columns for display
+df.columns = [col.title() for col in df.columns]
 
 # Normalize singer entries
 def normalize_singers(s):
@@ -41,6 +39,18 @@ query = st.text_input("Ask me something about the songs:")
 
 # Singer Explorer input
 singer_query = st.text_input("🔍 Enter a singer's name to explore (e.g., உமா ரமணன்):")
+
+# Data Integrity Checker
+if st.checkbox("🧪 Show rows with missing key fields"):
+    key_fields = ['Song', 'Movie', 'Music Director', 'Singers']
+    missing_info = df[key_fields].isnull()
+    df_missing = df[missing_info.any(axis=1)].copy()
+    if not df_missing.empty:
+        df_missing['Missing Fields'] = missing_info.apply(lambda row: ', '.join([col for col in key_fields if row[col]]), axis=1)
+        st.warning(f"⚠️ Found {len(df_missing)} rows with missing data.")
+        st.dataframe(df_missing[['Song', 'Movie', 'Year', 'Music Director', 'Singers', 'Missing Fields']])
+    else:
+        st.success("✅ No missing data in key fields!")
 
 # Helper functions
 def songs_by_lyricist(name):
