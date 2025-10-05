@@ -1,15 +1,30 @@
-
 import streamlit as st
 import pandas as pd
 
-# Load and merge all sheets from Excel
-
-xls = pd.ExcelFile("AriyavaiAaru_Songs_List_BOT.xlsx")
+# Load and merge all sheets
+xls = pd.ExcelFile("AriyavaiAaru_Songs_List.xlsx")
 df = pd.concat([xls.parse(sheet) for sheet in xls.sheet_names], ignore_index=True)
 
-# Clean and standardize column names
+# Clean column names
 df.columns = df.columns.str.strip()
-df.columns = ['Date', 'Song', 'Movie', 'Year', 'Music Director', 'Singers', 'Lyricist']
+
+# Fuzzy column mapping
+column_map = {
+    'date': 'Date',
+    'song': 'Song',
+    'movie': 'Movie',
+    'year': 'Year',
+    'music director': 'Music Director',
+    'composer': 'Music Director',
+    'lyricist': 'Lyricist',
+    'singers': 'Singers',
+    'singer': 'Singers'
+}
+
+# Normalize and rename columns
+normalized_cols = [col.lower().strip() for col in df.columns]
+renamed_cols = [column_map.get(col, col) for col in normalized_cols]
+df.columns = renamed_cols
 
 # App title
 st.title("🎶 Tamil Song Analysis Chatbot")
