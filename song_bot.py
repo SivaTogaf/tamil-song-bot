@@ -7,7 +7,7 @@ df = pd.concat([xls.parse(sheet) for sheet in xls.sheet_names], ignore_index=Tru
 
 # Clean and standardize column names
 df.columns = df.columns.str.strip()
-df.columns = ['Date', 'Song', 'Movie', 'Year', 'Music Director', 'Lyricist', 'Singers']
+df.columns = ['Date', 'Song', 'Movie', 'Year', 'Music Director', 'Singers', 'Lyricist']
 
 # App title
 st.title("🎶 Tamil Song Analysis Chatbot")
