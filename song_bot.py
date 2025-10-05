@@ -2,13 +2,13 @@ import streamlit as st
 import pandas as pd
 
 # Load and merge all sheets
-xls = pd.ExcelFile("AriyavaiAaru_Songs_List.xlsx")
+xls = pd.ExcelFile("AriyavaiAaru_Songs_List_BOT.xlsx")
 df = pd.concat([xls.parse(sheet) for sheet in xls.sheet_names], ignore_index=True)
 
 # Clean column names
 df.columns = df.columns.str.strip()
 
-# Fuzzy column mapping
+# Normalize column names
 column_map = {
     'date': 'Date',
     'song': 'Song',
@@ -20,11 +20,15 @@ column_map = {
     'singers': 'Singers',
     'singer': 'Singers'
 }
-
-# Normalize and rename columns
 normalized_cols = [col.lower().strip() for col in df.columns]
 renamed_cols = [column_map.get(col, col) for col in normalized_cols]
 df.columns = renamed_cols
+
+# Normalize singer entries
+def normalize_singers(s):
+    return str(s).replace("மற்றும்", ",").replace("&", ",").replace("/", ",").replace(":", ",").replace(";", ",").replace("  ", " ").strip()
+
+df['Singers'] = df['Singers'].apply(normalize_singers).str.lower()
 
 # App title
 st.title("🎶 Tamil Song Analysis Chatbot")
@@ -32,12 +36,15 @@ st.title("🎶 Tamil Song Analysis Chatbot")
 # User query input
 query = st.text_input("Ask me something about the songs:")
 
+# Singer Explorer input
+singer_query = st.text_input("🔍 Enter a singer's name to explore (e.g., உமா ரமணன்):")
+
 # Helper functions
 def songs_by_lyricist(name):
     return df[df['Lyricist'].str.contains(name, case=False, na=False)][['Song', 'Movie', 'Year']]
 
 def songs_by_singer(name):
-    return df[df['Singers'].str.contains(name, case=False, na=False)][['Song', 'Movie', 'Year']]
+    return df[df['Singers'].str.contains(name.lower(), na=False)][['Song', 'Movie', 'Year']]
 
 def songs_by_composer(name):
     return df[df['Music Director'].str.contains(name, case=False, na=False)][['Song', 'Movie', 'Year']]
@@ -108,3 +115,13 @@ if query:
 
     else:
         st.warning("Sorry, I didn't understand that. Try asking about songs by a lyricist, singer, composer, or year.")
+
+# Singer Explorer
+if singer_query:
+    results = songs_by_singer(singer_query)
+    total = len(results)
+    if total > 0:
+        st.subheader(f"🎤 Total songs sung by {singer_query}: {total}")
+        st.dataframe(results[['Song', 'Movie', 'Year', 'Music Director', 'Singers']])
+    else:
+        st.warning(f"No songs found for singer '{singer_query}'.")
