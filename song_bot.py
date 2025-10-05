@@ -1,12 +1,19 @@
 import streamlit as st
 import pandas as pd
 
-# Load and merge all sheets
-xls = pd.ExcelFile("AriyavaiAaru_Songs_List.xlsx")
-df = pd.concat([xls.parse(sheet) for sheet in xls.sheet_names], ignore_index=True)
+# Load and clean all sheets
+xls = pd.ExcelFile("AriyavaiAaru_Songs_List_BOT.xlsx")
 
-# Clean and normalize column names
-df.columns = df.columns.str.strip()
+def clean_sheet(sheet):
+    df = xls.parse(sheet, dtype=str)
+    df.columns = df.columns.str.strip()
+    df = df.dropna(how='all')  # Drop fully empty rows
+    df = df.loc[:, ~df.columns.str.contains('^Unnamed')]  # Drop unnamed columns
+    return df
+
+df = pd.concat([clean_sheet(sheet) for sheet in xls.sheet_names], ignore_index=True)
+
+# Normalize column names
 column_map = {
     'date': 'Date',
     'song': 'Song',
@@ -18,9 +25,7 @@ column_map = {
     'singers': 'Singers',
     'singer': 'Singers'
 }
-normalized_cols = [col.lower().strip() for col in df.columns]
-renamed_cols = [column_map.get(col, col) for col in normalized_cols]
-df.columns = renamed_cols
+df.columns = [column_map.get(col.lower().strip(), col.strip()) for col in df.columns]
 
 # Normalize singer entries
 def normalize_singers(s):
