@@ -22,6 +22,11 @@ def clean_sheet(sheet):
 
 df = pd.concat([clean_sheet(sheet) for sheet in xls.sheet_names], ignore_index=True)
 
+# Ensure all expected columns exist
+for col in ['song', 'movie', 'year', 'music director', 'singers', 'lyricist']:
+    if col not in df.columns:
+        df[col] = None
+
 # Title-case columns for display
 df.columns = [col.title() for col in df.columns]
 
@@ -40,10 +45,10 @@ query = st.text_input("Ask me something about the songs:")
 # Singer Explorer input
 singer_query = st.text_input("🔍 Enter a singer's name to explore (e.g., உமா ரமணன்):")
 
-# Data Integrity Checker
+# 🧪 Data Integrity Checker
 if st.checkbox("🧪 Show rows with missing key fields"):
     key_fields = ['Song', 'Movie', 'Music Director', 'Singers']
-    missing_info = df[key_fields].isnull()
+    missing_info = df[key_fields].isnull() | df[key_fields].eq("")
     df_missing = df[missing_info.any(axis=1)].copy()
     if not df_missing.empty:
         df_missing['Missing Fields'] = missing_info.apply(lambda row: ', '.join([col for col in key_fields if row[col]]), axis=1)
@@ -129,7 +134,7 @@ if query:
     else:
         st.warning("Sorry, I didn't understand that. Try asking about songs by a lyricist, singer, composer, or year.")
 
-# Singer Explorer module
+# 🎤 Singer Explorer module
 if singer_query:
     results = songs_by_singer(singer_query)
     total = len(results)
